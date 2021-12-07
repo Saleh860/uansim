@@ -10,11 +10,11 @@ import utils.Geometry;
  *
  */
 public class Adapter {
-	private static final double TRANSMISSION_POWER = 100; // mW
+	public static double TRANSMISSION_POWER = 70; // dBm
 	/**Receiver sensitivity, i.e., minimum detectable SNR
 	 * 
 	 */
-	private static final double RECEIVER_SENSITIVITY=25;  //dB
+	public static double RECEIVER_SENSITIVITY=25;  //dB
 
 	Node node;
 

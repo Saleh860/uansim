@@ -11,7 +11,7 @@ function showTopology(pos, range, sources, showNodeLabels)
 n=size(pos,1);
 adjacency=range>=sqrt((pos(:,1)*ones(1,n) - ones(n,1)*pos(:,1)').^2 + (pos(:,2)*ones(1,n) - ones(n,1)*pos(:,2)').^2 + (pos(:,3)*ones(1,n) - ones(n,1)*pos(:,3)').^2);
 %%
-figure
+f=figure;
 if nargin<4
     showNodeLabels=false;
 end
@@ -19,11 +19,14 @@ if nargin==2
     plot3(pos(:,1), pos(:,2), -pos(:,3), '.', 'MarkerSize',15);
     hold on
 else
-    plot3(pos(1,1), pos(1,2), -pos(1,3), '.g', 'MarkerSize',15);
+    plot3(pos(sources,1), pos(sources,2), -pos(sources,3), 'r.', 'MarkerSize',30);
     hold on
-    plot3(pos(2:n,1), pos(2:n,2), -pos(2:n,3), '.b', 'MarkerSize',15);
+    plot3(pos(1,1), pos(1,2), -pos(1,3), 'g.', 'MarkerSize',20);
     hold on
-    plot3(pos(sources,1), pos(sources,2), -pos(sources,3), '.r', 'MarkerSize',30);
+    ii=true(n,1);
+    ii(1)=false;
+    ii(sources)=false;
+    plot3(pos(ii,1), pos(ii,2), -pos(ii,3), 'b.', 'MarkerSize',20);
     xlabel('(m)')
     ylabel('(m)')
     zlabel('(m)')
@@ -41,3 +44,5 @@ for i=1:n
         end
     end
 end
+f.Position = [1 1 720 720];
+set(gca,'FontSize',14)

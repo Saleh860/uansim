@@ -7,6 +7,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.function.Supplier;
 
+import uansim.Channel.MultisourceAmbientNoise;
+import uansim.Channel.PowerDelayProfile;
+import uansim.Channel.ShippingNoise;
+import uansim.Channel.ThermalNoise;
+import uansim.Channel.ThorpPropagationModel;
+import uansim.Channel.TurbulenceNoise;
+import uansim.Channel.WaveNoise;
 import uansim.DBR.AttackNodeLayer;
 import uansim.DPR.NodeLayer;
 import utils.SequentialIdGenerator;
@@ -59,15 +66,30 @@ public class Simulator {
 		}
 		
 		public void createModel() throws Exception {
+			
+			makeNetwork();
+			
+			Physical.setFramingBitOverhead(trafficParameters.framingBitOverhead);
+			Adapter.TRANSMISSION_POWER= topologyParameters.transmissionPower;
+			for(double commRange=10;commRange<1000;commRange+=10) {
+				double[] n1= {0,0,0};
+				double[] n2= {0,0,commRange};
+				PowerDelayProfile pdp = channel.getPowerDelayProfile(n1, n2, new double[]{0,0});
+				double gain=pdp.getPower();
+				double receivePower=topologyParameters.transmissionPower+gain-channel.getAmbientNoisePower(new double[]{0,0});
+				if(receivePower<Adapter.RECEIVER_SENSITIVITY) {
+					topologyParameters.communicationRange=commRange-10;
+					topologyParameters.interferenceRange = 2*commRange;
+					break;
+				}
+			}
+//			System.out.println("Calculated Communication Range=" + topologyParameters.communicationRange);
+			
 			if(nodePositions==null)
 				prepare();
 
-			Physical.setFramingBitOverhead(trafficParameters.framingBitOverhead);
-//			Physical.COMMUNICATION_RANGE=topologyParameters.communicationRange;	
-//			Physical.INTERFERENCE_RANGE=topologyParameters.interferenceRange;
 			
-			makeNetwork();
-						
+//			Physical.INTERFERENCE_RANGE=topologyParameters.interferenceRange;
 			//Create nodes
 			makeSink(sinkPos);
 			nodes = new NodeLayer[nodePositions.length-1];
@@ -273,6 +295,12 @@ public class Simulator {
 		 * make the signal to noise ration below the detection threshold)
 		 */
 		public double interferenceRange;
+		
+		
+		/**
+		 * The adapter transmission power
+		 */
+		public int transmissionPower;
 
 		protected TopologyParameters() {
 			this.networkDensity = 1;
@@ -281,6 +309,7 @@ public class Simulator {
 			this.deploymentSideLength = 500;
 			this.deploymentDepth = 100;
 			this.topologySeed = 8792766196518812341L;
+			this.transmissionPower=69;
 			this.communicationRange = 150;
 			this.interferenceRange = 2*communicationRange;
 		}
@@ -358,9 +387,20 @@ public class Simulator {
 	Supplier<Integer> idGenerator;
 
 
+	private Channel channel;
+
 	public DPR makeNetwork() {
 		idGenerator = new SequentialIdGenerator();
-		Channel channel=new Channel();
+		channel = new Channel()
+				.setAmbientNoiseSource(
+						new MultisourceAmbientNoise()
+						.addSource(new TurbulenceNoise())
+						.addSource(new WaveNoise(0))	//wind speed = 0
+						.addSource(new ShippingNoise(0)) //low shipping activity
+						.addSource(new ThermalNoise()))
+				.setPropagationModel(
+						new ThorpPropagationModel(1500, 2.0)); //Spherical spreading
+//		channel.enableDebug();
 		physical = new Physical(channel);
 		return network = new DPR(physical, new Random(routingParameters.decisionSeed));
 	}
@@ -494,9 +534,9 @@ public class Simulator {
 		sim.trafficParameters.channelBitRate=100000;
 		sim.trafficParameters.framingBitOverhead=160;
 
-		sim.routingParameters.K = 0.8;
+		sim.routingParameters.K = 0.1;
 		sim.routingParameters.forwardingProbability = new double[256];
-		Arrays.fill(sim.routingParameters.forwardingProbability, 0.8);
+		Arrays.fill(sim.routingParameters.forwardingProbability, sim.routingParameters.K);
 		sim.routingParameters.forwardingThreshold = 0;
 		sim.routingParameters.maximumForwardingDelay=1000;
 		

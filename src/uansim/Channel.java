@@ -446,7 +446,7 @@ public class Channel {
 							.addSource(new ShippingNoise(0)) //low shipping activity
 							.addSource(new ThermalNoise()))
 					.setPropagationModel(
-							new ThorpPropagationModel(1500, 2.0));
+							new ThorpPropagationModel(1500, 2.0)); //Spherical spreading
 			channel.enableDebug();
 			
 			for(Node node: nodes) {
