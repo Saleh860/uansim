@@ -19,7 +19,7 @@ javaaddpath('.\bin');
 import uansim.*
 
 algorithms={@updateForwardingProbability1,@updateForwardingProbability2,@updateForwardingProbability3};
-updateForwardingProbability=algorithms{3};
+updateForwardingProbability=algorithms{1};
 
 %   network_density number_of_nodes min_number_of_neighbors
 experiments = [
@@ -50,7 +50,7 @@ for pi=1
         %for each initial forwarding probability
         for pp = 0 %:0.1:1.0 % pi*experiments(ii,4); %:0.1:1.0
             %for each number of attackers
-            for a  = 0:A  
+            for a  = 1:A  
                 %history of forwarding probability
                 past=[];
 
@@ -335,13 +335,12 @@ function past=updateForwardingProbability1(sim, past, d)
     for i=1:length(sim.topology.sourceNodes)
         j=sim.topology.sourceNodes(i)+1;
         rs=r(i);
-        if abs(rs-K)>0.02
-            ts(i)=K*(ts(i)-rs+1);
-            if ts(i)>1
-                ts(i)=1;
-            end
-            p(j)=1-nthroot(1-ts(i),d);
+        if rs-K
+        ts(i)=K*(ts(i)-rs+1);
+        if ts(i)>1
+            ts(i)=1;
         end
+        p(j)=1-nthroot(1-ts(i),d);
     end
     sim.routingParameters.forwardingProbability=p;
     past=ts;

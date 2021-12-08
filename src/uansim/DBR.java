@@ -296,20 +296,23 @@ public class DBR extends Flood{
 	}
 	
 	public class AttackNodeLayer extends NodeLayer {
+		private Consumer<uansim.Network.Packet> attackForewardDecision =  (packet) -> {
+			packet.update(this);
+			Scheduler.it.schedule(Network.PROCESSING_DELAY, 
+					(s)->forward.accept(packet), 
+					()->"Node#" + String.format("%3d", getId()) +"::SpoofDepth("+ packet +")");	
+			log("--->     Spoofed depth ");
+		};
+
 		public AttackNodeLayer(Node node) {
 			super(node);
+			forwardDecision = attackForewardDecision ;
 		}
 
 		public AttackNodeLayer(Physical.NodeLayer node) {
 			super(node);
+			forwardDecision = attackForewardDecision ;
 		}
-
-		Consumer<Packet> forwardDecision = (packet) -> {
-			packet.update(this);
-			Scheduler.it.schedule(Network.PROCESSING_DELAY, 
-					(s)->forward.accept(packet), 
-					()->"Node#" + String.format("%3d", getId()) +"::SpoofDepth("+ packet +")");				
-		};
 
 		@Override
 		public double getDepth() {
