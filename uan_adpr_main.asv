@@ -2,6 +2,10 @@ clear
 clc
 close all
 
+javarmpath('.\bin');
+javaaddpath('.\bin');
+import uansim.*
+
 % load("pos_data.mat", "pos_data");
 % pos_data=pos_data(1,:);
 % pos_data=pos_data(:,1:1000);
@@ -9,32 +13,42 @@ close all
 
 load("good_pos_data.mat", "good_pos_data");
 pos_data=good_pos_data(2:4,1:100);
-pos_data=good_pos_data(2:4,2);
-
 dispTopology=false;
 debugSimulation=false;
+dispDetailedResults=true;
+dispSummaryResults=true;
 
-javarmpath('.\bin');
-javaaddpath('.\bin');
-import uansim.*
+algorithms={@updateForwardingProbability1,@updateForwardingProbability2,@updateForwardingProbabilityPolynomialFitting};
+updateForwardingProbability=algorithms{3};
+global polynomialDegree
+polynomialDegree=4;
+global eta1
+global eta2
+K=0.8;
+eta1=K^2+0.1;
+eta2=eta1;
+Networks=5;
 
-algorithms={@updateForwardingProbability1,@updateForwardingProbability2,@updateForwardingProbability3};
-updateForwardingProbability=algorithms{1};
+
+for net= Networks   %Network #
+pos_data=good_pos_data(2:4,net);   %Network #4, #9 polyfit fails when degree>3
+                                %Network #11, #12 attack failed
 
 %   network_density number_of_nodes min_number_of_neighbors
 experiments = [
 ...    4	28	3 1
     5	47	4 0.9
+    8	75	7 0.5
+    15	140	9 0.3
 ...    6	57	5 1
 ...    7	66	6 1
-    8	75	7 0.5
 ...    9	85	8 1
-    15	140	9 0.3
 ];
 
 %Result columns
 D=[]; p=[]; attacks=[]; nodes=[]; src_deg=[]; genrtd=[]; sent=[];
 recved=[]; forwd=[]; pktcost=[]; e2edly=[]; fintim=[]; maxpktcost=[];
+masterResults= table(D, p, attacks, recved, forwd, pktcost, maxpktcost, e2edly, fintim);
 
 %Max # of attackers
 A=1;
@@ -42,13 +56,15 @@ A=1;
 % after each iteration, the forwarding probability is revised using the
 % algorithm defined by "updateForwardingProbability"
 
-iterations=20;
+iterations=30;
 
 for pi=1
-    % for each experiment
-    for ii = 1: size(pos_data,1) 
+    % for each density
+    for ii = 1: size(pos_data,1)
+
         %for each initial forwarding probability
         for pp = 0 %:0.1:1.0 % pi*experiments(ii,4); %:0.1:1.0
+            
             %for each number of attackers
             for a  = 1:A  
                 %history of forwarding probability
@@ -56,6 +72,7 @@ for pi=1
 
                 %number of valid topologies
                 n=0;
+                %for each topology
                 for k= 1:size(pos_data,2)
                     %filter out topologies with invalid nodes
                     if any(all(pos_data{ii,k}==[0,0,0],2)) 
@@ -81,7 +98,7 @@ for pi=1
                         sim.trafficParameters.channelBitRate=100000/8;
 
                         % Routing parameters
-                        sim.routingParameters.K = 0.8;
+                        sim.routingParameters.K = K;
                         sim.routingParameters.forwardingProbability = pp*ones(256,1);
                         sim.routingParameters.forwardingThreshold = 0;
                         sim.routingParameters.maximumForwardingDelay=1;
@@ -96,7 +113,7 @@ for pi=1
                         %transfer topology to simulator
                         createTopology(sim, pos_data{ii,k});
 
-                        if dispTopology && pi==1 && a==0 && pp==0 && it==1
+                        if dispTopology && pi==1 && a==1 && pp==0 
                             disp('sim.topology.sinkPos=new double[]')
                             t=sim.topology.sinkPos;
                             disp(['{',mat2str(t(1)),',',mat2str(t(2)),',',mat2str(t(3)),'};']);
@@ -116,6 +133,8 @@ for pi=1
                             showTopology(sim.topology.nodePositions, ...
                                 sim.topologyParameters.communicationRange, ...
                                 sim.topology.sourceNodes+1, false);
+                            set(gcf, 'NumberTitle', 'off', ...
+                                'Name', sprintf('Network #%d', net));
                             exportgraphics(gcf,['net',mat2str(experiments(ii,1)),'.png'],'Resolution',600)
                         end
                         d=experiments(mod(ii-1, length(experiments))+1,1);
@@ -181,18 +200,31 @@ for pi=1
                     fintim=[fintim;s_fintim];
                     maxpktcost=[maxpktcost;s_maxpktcost./s_recved];                
                 end
-            end
+                disp(['Number of valid topologies = ' mat2str(n)])
+                % K=sim.routingParameters.K * ones(iterations,1);
+                results= table(D, p, attacks, recved, forwd, pktcost, maxpktcost, e2edly, fintim);
 
+                if dispDetailedResults
+                    disp(results)
+                end
+
+                if dispSummaryResults
+                    disp(['Net #' mat2str(net), ...
+                        '   , density=', mat2str(d) ...
+                        '   , earliest convergence=' mat2str(find(recved>=100*K-2,1))...
+                        '   , number of successes=' mat2str(sum(recved>=100*K-2))...
+                        '   , converged at p=' mat2str(p(end))])
+                end
+                masterResults=[masterResults;results];  
+                D=[]; p=[]; attacks=[]; nodes=[]; src_deg=[]; genrtd=[]; sent=[];
+                recved=[]; forwd=[]; pktcost=[]; e2edly=[]; fintim=[]; maxpktcost=[];
+            end
         end
     end
 end
-disp(['Number of valid topologies = ' mat2str(n)])
-K=sim.routingParameters.K * ones(iterations,1);
-results= table(D, p, attacks, recved, forwd, pktcost, maxpktcost, e2edly, fintim);
-disp(results)
 
 % save("good_pos.mat", "good_pos");
-
+end
 
 
 function createTopology(sim, pos) 
@@ -335,49 +367,55 @@ function past=updateForwardingProbability1(sim, past, d)
     for i=1:length(sim.topology.sourceNodes)
         j=sim.topology.sourceNodes(i)+1;
         rs=r(i);
-        if rs-K
-        ts(i)=K*(ts(i)-rs+1);
-        if ts(i)>1
-            ts(i)=1;
+        if abs(rs-K)>0.02
+            ts(i)=K*(ts(i)-rs+1);
+            if ts(i)>1
+                ts(i)=1;
+            end
+            p(j)=1-nthroot(1-ts(i),d);
         end
-        p(j)=1-nthroot(1-ts(i),d);
     end
     sim.routingParameters.forwardingProbability=p;
     past=ts;
 end
 
-
 function past=updateForwardingProbability2(sim, past, d)
+    global eta1
+    global eta2
+
     if isempty(past)
         past=zeros(sim.topologyParameters.sourcesCount,1);
     end
     p = sim.routingParameters.forwardingProbability;
     r = sim.results.deliveryRatio;
-    past = [r, past];
+   past = [r, past];
     K=sim.routingParameters.K;
     for i=1:length(sim.topology.sourceNodes)
         j=sim.topology.sourceNodes(i)+1;
-        rs=max(r(i),mean(past(i,1:min([30,min(size(past,2))]))));
+%         ts=past(i);
         ts=p(j);
-        eta=0.25;
+        rs=r(i);
+        rs=max(r(i),mean(past(i,1:min([30,min(size(past,2))]))));
         if K-rs > 0.02 
             %Increase threat level
-            ts2 = (1 - eta*(K - rs))*ts + eta*(K - rs);
+            ts2 = (1 - eta1*(K - rs))*ts + eta1*(K - rs);
         elseif K-rs < -0.02 && ts>0 
             %Decrease threat level
-            ts2 = max([0, ts + 0.5 * (K - rs)]);
+            ts2 = max([0, ts + eta2 * (K - rs)]);
         elseif ts<0
             ts2=0;
         else
             ts2=ts;
         end
+%         p(j)=1-nthroot(1-ts2,d);
         p(j) = ts2;
+%         past(i)=ts2;
     end
     sim.routingParameters.forwardingProbability=p;
 end
 
-
-function [past]=updateForwardingProbability3(sim, past, d)
+function [past]=updateForwardingProbabilityPolynomialFitting(sim, past, d)
+    global polynomialDegree
     if isempty(past)
         past_p={};
         past_r={};
@@ -412,32 +450,45 @@ function [past]=updateForwardingProbability3(sim, past, d)
         %remove points that are too close to the new point
         p_p=past_p{i};
         p_r=past_r{i};
-        p_r=p_r(abs(p_p-p(j))>0.01);
+        p_r=p_r(abs(p_p-p(j))>0.01);        %Clean the series from the points that are too close to the most recent point
         p_p=p_p(abs(p_p-p(j))>0.01);
         
         %add the new points
         p_p = [p(j), p_p];   
         p_r = [r(i), p_r];
-        p_q = p_r./(p(j)+1/D);
+%         p_q = p_r./(p_p+1/D);  %estimate the network efficiency
+        p_q = p_r;  %estimate the network efficiency
         past_p{i}=p_p;
         past_r{i}=p_r;
 
-        %% polynomial degree 3
-        n = min(length(p_p)-1,3);
+        n = min(length(p_p)-1,polynomialDegree);
     
-        if r(i)<K && n==0
+        if n==0 % && r(i)<K 
             p(j)=0.5;
+        elseif n==1 % && r(i)<K 
+            p(j)=0.75;
+        elseif n==2 % && r(i)<K
+            p(j)=0.25;
         else
             poly = polyfit(p_p, p_r, n);
+            if false
+                figure
+                plot((0:0.05:1),polyval(poly,(0:0.05:1)))
+                hold on 
+                plot(p_p,p_r,'x')
+                title(['n=',mat2str(n)])
+            end
             %%solve poly-K==0
             xs=roots([poly(1:n),poly(n+1)-K]);
             %%solution must be in the interval [0,1]
             xs=xs(real(xs)==xs & xs>=0 & xs<=1);
 
             if ~isempty(xs)     %if solutions exists
-                p(j)=min(xs);   %take the smallest one
+                %p(j)=min(xs);   %take the smallest one
+                p(j)=mean([p(j),min(xs)]);   %move towards the smallest one
             else    %maximize delivery ratio
                 poly = polyfit(p_p, p_q, n);
+                
                 poly1=polyder(poly);
                 poly2=polyder(poly1);
                 xs=roots(poly1)';
