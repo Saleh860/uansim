@@ -1,3 +1,5 @@
 simulator.log
 simulator.log
 *.sav
+bin
+*.class

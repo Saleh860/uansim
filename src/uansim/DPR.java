@@ -1,14 +1,18 @@
 package uansim;
 
-import java.util.ArrayList;
 import java.util.Random;
 import java.util.function.Consumer;
 
-import uansim.Physical.NodeLayer;
 import uansim.Node;
 
 public class DPR extends DBR {
 	public static double[] FORWARDING_PROBABILITY=new double[256];
+	public double getForwardingProbability(int i) {
+		return FORWARDING_PROBABILITY[i];
+	}
+	public void setForwardingProbability(int i, double p) {
+		FORWARDING_PROBABILITY[i]=p;
+	}
 	public DPR(Physical physical) {
 		super(physical);
 		rand = new Random();

@@ -20,12 +20,86 @@ import utils.SequentialIdGenerator;
 
 public class Simulator {
 	
-	
 	public class Topology {
+		public void setNodePositions(double[] nodePositions) {
+			if(nodePositions.length%3!=0)
+				System.err.println("nodePositions must be a n×3 vector");
+			else {
+				int n = nodePositions.length/3;
+				nodeCount=n-1;
+				this.nodePositions=new double[n][];
+				for(int i=0; i<n; i++) {
+					this.nodePositions[i]=new double[] 
+							{nodePositions[i],nodePositions[i+n],nodePositions[i+2*n]};
+				}
+			}
+		}
+		public void setAttackerPositions(double[] attackerPositions) {
+			if(nodePositions.length%3!=0)
+				System.err.println("attackerPositions must be a n×3 vector");
+			else {
+				int n = attackerPositions.length/3;
+				this.attackerPositions=new double[n][];
+				for(int i=0; i<n; i++) {
+					this.attackerPositions[i]=new double[] 
+							{attackerPositions[i],attackerPositions[i+n],attackerPositions[i+2*n]};
+				}
+			}
+		}
+		
+		public double[] getNodePositions() {
+			int n=this.nodePositions.length;
+			double[] nodePositions=new double[3*n];
+			for(int i=0; i<n; i++) {
+				nodePositions[i]=this.nodePositions[i][0];
+				nodePositions[i+n]=this.nodePositions[i][1];
+				nodePositions[i+2*n]=this.nodePositions[i][2];
+			}
+			return nodePositions;
+		}
+		
+		public double[] getAttackerPositions() {
+			int n=this.attackerPositions.length;
+			double[] attackerPositions=new double[3*n];
+			for(int i=0; i<n; i++) {
+				attackerPositions[i]=this.attackerPositions[i][0];
+				attackerPositions[i+n]=this.attackerPositions[i][1];
+				attackerPositions[i+2*n]=this.attackerPositions[i][2];
+			}
+			return attackerPositions;
+		}
+		
 		public double[] sinkPos;
-		public double[][] nodePositions;
-		public double[][] attackerPositions;
-		public int[] sourceNodes;
+		/**
+		 * positions of all nodes including the sink
+		 */
+		private double[][] nodePositions;
+		
+		private double[][] attackerPositions;
+		
+		/**
+		 * Indexes of nodes which are sources
+		 */
+		private int[] sourceNodes;
+		public int[] getSourceNodes() {
+			return sourceNodes;
+		}
+		public void setSourceNode(int i) {
+			sourceNodes=new int[] {i};
+		}
+		public void addSourceNode(int i) {
+			if(sourceNodes==null) {
+				sourceNodes=new int[1];;
+			}
+			else {
+				sourceNodes=Arrays.copyOf(sourceNodes, sourceNodes.length+1);
+			}
+			sourceNodes[sourceNodes.length-1]=i;
+		}
+		
+		/**
+		 * Underwater node count (excluding the sink)
+		 */
 		public int nodeCount;
 		private Random rand=new Random();
 
@@ -100,7 +174,7 @@ public class Simulator {
 
 			setSources(sourceNodes);
 
-			makeAttackers(attackerPositions);
+			makeAttackers();
 		}
 
 		public void generateConnectedTopology() {
@@ -421,10 +495,10 @@ public class Simulator {
 		return sources;
 	}
 	
-	public void makeAttackers(double[][] attackerPositions) {
-		attackers = new AttackNodeLayer[attackerPositions.length];
-		for(int i=0; i<attackerPositions.length; i++) {
-			attackers[i] = network.new AttackNodeLayer(new Node(idGenerator, attackerPositions[i]));
+	public void makeAttackers() {
+		attackers = new AttackNodeLayer[topology.attackerPositions.length];
+		for(int i=0; i<topology.attackerPositions.length; i++) {
+			attackers[i] = network.new AttackNodeLayer(new Node(idGenerator, topology.attackerPositions[i]));
 		}
 	}
 	
