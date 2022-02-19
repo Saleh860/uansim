@@ -1,1 +1,0 @@
-classdef TableProperties	properties(Access=public)		Description= ''        UserData= []        DimensionNames={'Row'  'Variables'}        VariableNames={'x'  'y'  'z'}		VariableDescriptions={}        VariableUnits={}		VariableContinuity=[]        RowNames={}		CustomProperties='N/A'	endend

@@ -1,92 +1,107 @@
-clear
-clc
-close all
+function [results,t]=uan_authentication_main(basedir)
 
-javaaddpath('.\bin');
-import uansim.*
+	if nargin<1
+		basedir='..\';
+	end
 
-debug=true;
-dispTopology=false;
+	dispTopology=false;
+	debugSimulation=0;
 
-
-netload=[]; msglen=[]; attacks=[];nodes=[]; src_deg=[];genrtd=[];sent=[];recved=[];forwd=[];pktcost=[];
-past=[];
-
-overhead=160;
-for genrate=[10,50,100]
-    for msglength = [100,1000]
-        for atkCount=0:7 % for scenario #2
-            sim=Simulator();
-            sim.debug = debug;
-
-            %%%%%%%%%% PARAMETERS %%%%%%%%%%
-            sim.topologyParameters.topologySeed = 17943;
-            sim.topologyParameters.networkDensity = 3;
-            sim.topologyParameters.deploymentSideLength=500;
-            sim.topologyParameters.deploymentDepth=250;
-            sim.topologyParameters.sourcesCount = 7;
-            sim.topologyParameters.attackersCount =atkCount; %(change in scenario 2,3)
-
-            sim.topologyParameters.communicationRange=150;
-            sim.topologyParameters.interferenceRange=2*150;
-            nodeCount=30;
-
-            sim.trafficParameters.messageCount=100;      %(per source)
-            sim.trafficParameters.generationBitRate=genrate; %(to control load)
-            sim.trafficParameters.messageBitLength=msglength;
-            sim.trafficParameters.channelBitRate=10000;
-            sim.trafficParameters.framingBitOverhead=overhead; %(change in scenario 3,4)
-
-            sim.routingParameters.K = 0.0;
-            sim.routingParameters.forwardingProbability = 0.0*ones(256,1);
-            sim.routingParameters.forwardingThreshold = 0;
-            sim.routingParameters.maximumForwardingDelay=25;
-
-            %sim.topology.prepare();
-
-            createTopology(sim, nodeCount);
-            if dispTopology
-                disp('sim.topology.sinkPos=new double[]')
-                t=sim.topology.sinkPos;
-                disp(['{',mat2str(t(1)),',',mat2str(t(2)),',',mat2str(t(3)),'};']);
-                disp('sim.topology.nodePositions=new double[][]{')
-                t=sim.topology.nodePositions;
-                for i=1:size(t,1)
-                    disp(['{',mat2str(t(i,1)),',',mat2str(t(i,2)),',',mat2str(t(i,3)),'},']);
-                end
-                disp('};')
-                disp('sim.topology.attackerPositions=new double[][]{')
-                t=sim.topology.attackerPositions;
-                for i=1:size(t,1)
-                    disp(['{',mat2str(t(i,1)),',',mat2str(t(i,2)),',',mat2str(t(i,3)),'},']);
-                end
-                disp('};')
-
-                showTopology(sim.topology.nodePositions, ...
-                    sim.topologyParameters.communicationRange, ...
-                    sim.topology.sourceNodes+1);
-            end
-
-            sim.topology.createNodes();
-            sim.run()
-            netload=[netload; 100*sim.trafficParameters.generationBitRate*sim.topologyParameters.sourcesCount / (sim.trafficParameters.channelBitRate*0.09)];
-            msglen=[msglen; sim.trafficParameters.messageBitLength];
-            attacks=[attacks;sim.topologyParameters.attackersCount];
-            nodes=[nodes;sim.topology.nodeCount];
-            src_deg=[src_deg;sim.topology.countSourceNeighbors(sim.topology.sourceNodes(1))];
-            genrtd=[genrtd;sim.results.generatedCount];
-            sent=[sent;sim.results.sentCount]; 
-            recved=[recved;sim.results.receivedCount];
-            forwd=[forwd;sim.results.forwardedCount];
-            pktcost=[pktcost;round(sim.results.forwardedCount/sim.results.receivedCount,2)];
-
-            %    sim.updateForwardingProbability();
-            %    past = updateForwardingProbability(sim, past);
-        end
+	javapath=[basedir,'bin'];
+    dpath=javaclasspath();
+    if sum(strcmpi(dpath,javapath))>0
+        javarmpath(javapath);
     end
+    javaaddpath(javapath);
+    
+	octavepath=[basedir,'scripts\octave'];
+    addpath(octavepath);
+
+	debug=0;
+	dispTopology=false;
+
+
+	netload=[]; msglen=[]; attacks=[];nodes=[]; src_deg=[];genrtd=[];sent=[];recved=[];forwd=[];pktcost=[];
+	past=[];
+
+	overhead=160;
+	for genrate=[10,50,100]
+		for msglength = [100,1000]
+			for atkCount=0:7 % for scenario #2
+				sim=createJavaObject('uansim.Simulator');
+				sim.debug = debug;
+
+				%%%%%%%%%% PARAMETERS %%%%%%%%%%
+				sim.topologyParameters.topologySeed = 17943;
+				sim.topologyParameters.networkDensity = 3;
+				sim.topologyParameters.deploymentSideLength=500;
+				sim.topologyParameters.deploymentDepth=250;
+				sim.topologyParameters.sourcesCount = 7;
+				sim.topologyParameters.attackersCount =atkCount; %(change in scenario 2,3)
+
+				sim.topologyParameters.communicationRange=150;
+				sim.topologyParameters.interferenceRange=2*150;
+				nodeCount=30;
+
+				sim.trafficParameters.messageCount=100;      %(per source)
+				sim.trafficParameters.generationBitRate=genrate; %(to control load)
+				sim.trafficParameters.messageBitLength=msglength;
+				sim.trafficParameters.channelBitRate=10000;
+				sim.trafficParameters.framingBitOverhead=overhead; %(change in scenario 3,4)
+
+				sim.routingParameters.K = 0.0;
+				sim.routingParameters.forwardingProbability = 0.0*ones(256,1);
+				sim.routingParameters.forwardingThreshold = 0;
+				sim.routingParameters.maximumForwardingDelay=25;
+
+				%sim.topology.prepare();
+
+				createTopology(sim, nodeCount);
+				if dispTopology
+					disp('sim.topology.sinkPos=new double[]')
+					t=sim.topology.sinkPos;
+					disp(['{',mat2str(t(1)),',',mat2str(t(2)),',',mat2str(t(3)),'};']);
+					disp('sim.topology.nodePositions=new double[][]{')
+					t=sim.topology.nodePositions;
+					for i=1:size(t,1)
+						disp(['{',mat2str(t(i,1)),',',mat2str(t(i,2)),',',mat2str(t(i,3)),'},']);
+					end
+					disp('};')
+					disp('sim.topology.attackerPositions=new double[][]{')
+					t=sim.topology.attackerPositions;
+					for i=1:size(t,1)
+						disp(['{',mat2str(t(i,1)),',',mat2str(t(i,2)),',',mat2str(t(i,3)),'},']);
+					end
+					disp('};')
+
+					showTopology(sim.topology.nodePositions, ...
+						sim.topologyParameters.communicationRange, ...
+						sim.topology.sourceNodes+1);
+				end
+
+				sim.topology.createModel();
+				sim.run();
+				netload=[netload; 100*sim.trafficParameters.generationBitRate*sim.topologyParameters.sourcesCount / (sim.trafficParameters.channelBitRate*0.09)];
+				msglen=[msglen; sim.trafficParameters.messageBitLength];
+				attacks=[attacks;sim.topologyParameters.attackersCount];
+				nodes=[nodes;sim.topology.nodeCount];
+				sourceNodes=sim.topology.getSourceNodes();
+				src_deg=[src_deg;sim.topology.countSourceNeighbors(sourceNodes(1))];
+				genrtd=[genrtd;sim.results.generatedCount];
+				sent=[sent;sim.results.sentCount]; 
+				recved=[recved;sim.results.receivedCount];
+				forwd=[forwd;sim.results.forwardedCount];
+				pktcost=[pktcost;round(100*sim.results.forwardedCount/sim.results.receivedCount)/100];
+
+				%    sim.updateForwardingProbability();
+				%    past = updateForwardingProbability(sim, past);
+			end
+		end
+	end
+	t= table(		    netload,msglen, attacks, nodes, genrtd, recved, round(100*recved./genrtd), pktcost, ...
+	'VariableNames',{	'NetLoad','MsgLen','atck#', 'nodes'   , 'genrtd', 'recvd', 'delivery_ratio', 'xmits/pkt'});
+	results=[t.Properties.VariableNames;table2cell(t)];
 end
-results= table(netload,msglen, attacks, nodes, genrtd, recved, round(100*recved./genrtd,1), pktcost);
-disp(results)
 
 function createTopology(sim, nodeCount) 
 
@@ -99,8 +114,11 @@ function createTopology(sim, nodeCount)
     for i=1:sim.topologyParameters.sourcesCount
         chooseDeepestSource(sim);		
     end
+	
+	sourceNodes=sim.topology.getSourceNodes();
+
     for i=1:sim.topologyParameters.attackersCount 
-        sim.topology.placeAttacker(sim.topology.sourceNodes(i));
+        sim.topology.placeAttacker(sourceNodes(i));
     end
 %    sim.topology.attackerPos = [271,68,84];
 
@@ -161,31 +179,14 @@ function generateConnectedTopology(sim)
         end
     end
 
-    top.nodePositions=pos;
+    top.setNodePositions(pos(:));
 end
 
 function chooseDeepestSource(sim) 
-    depths=sim.topology.nodePositions(:,3);
-    depths(sim.topology.sourceNodes+1)=0;
+	pos=reshape(sim.topology.getNodePositions,[],3);
+    depths=pos(:,3);
+    depths(sim.topology.getSourceNodes()+1)=0;
     [~,i] = max(depths);
-    sim.topology.sourceNodes=[sim.topology.sourceNodes; i-1];
+    sim.topology.addSourceNode(i-1);
 end
 
-function past=updateForwardingProbability(sim, past)
-    p = sim.routingParameters.forwardingProbability;
-    r = sim.results.deliveryRatio;
-    past = [r, past];
-    K=sim.routingParameters.K;
-    for i=1:length(sim.topology.sourceNodes)
-        j=sim.topology.sourceNodes(i)+1;
-        rs=max(r(i),mean(past(i,1:min([30,min(size(past,2))]))));
-        ts=p(j);
-        if rs<=K
-            ts2 = (1 + rs - K)*ts + (K - rs);
-        else
-            ts2 = ts + 0.5 * (K - rs);
-        end
-        p(j) = ts2;
-    end
-    sim.routingParameters.forwardingProbability=p;
-end

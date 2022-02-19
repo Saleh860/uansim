@@ -68,19 +68,7 @@ public class Simulator {
 			}
 			return attackerPositions;
 		}
-		
-		public double[] sinkPos;
-		/**
-		 * positions of all nodes including the sink
-		 */
-		private double[][] nodePositions;
-		
-		private double[][] attackerPositions;
-		
-		/**
-		 * Indexes of nodes which are sources
-		 */
-		private int[] sourceNodes;
+
 		public int[] getSourceNodes() {
 			return sourceNodes;
 		}
@@ -96,6 +84,19 @@ public class Simulator {
 			}
 			sourceNodes[sourceNodes.length-1]=i;
 		}
+		
+		public double[] sinkPos;
+		/**
+		 * positions of all nodes including the sink
+		 */
+		private double[][] nodePositions;
+		
+		private double[][] attackerPositions;
+		
+		/**
+		 * Indexes of nodes which are sources
+		 */
+		private int[] sourceNodes;
 		
 		/**
 		 * Underwater node count (excluding the sink)

@@ -1,0 +1,1 @@
+function obj=getJavaProperty(className,property)	if isOctave		result=java_get(className,property);	else		result=eval([className,'.',property]);	end	end 

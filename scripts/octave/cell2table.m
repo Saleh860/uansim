@@ -1,0 +1,1 @@
+function t=cell2table(C,varargin) 	if ~iscell(C)		error('cell2table: First argument must be a cell array')	else 				t=table(C{:},varargin{:});	end	end 

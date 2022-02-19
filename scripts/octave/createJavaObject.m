@@ -1,0 +1,1 @@
+function obj=createJavaObject(className,varargin)	if isOctave		obj=javaObject(className,varargin{:});	else		f=eval(['@',className]);		obj=f(varargin{:});	end	end 
