@@ -324,7 +324,7 @@ public class Simulator {
 						vulnerable = true;
 					}
 					if(neighbor!=vulnerable) {
-						System.err.println("Failed to position attacker in an optimal location");
+//						System.err.println("Failed to position attacker in an optimal location");
 					}    
 				}
 			}

@@ -1,4 +1,4 @@
-function [results,t]=uan_rpr_main(basedir)
+function [results,t]=RPRSim(basedir)
 	if nargin<1
 		basedir='..\';
 	end
@@ -153,7 +153,7 @@ function [results,t]=uan_rpr_main(basedir)
 	end
 	t= table(D, attacks, recved, forwd, pktcost,maxpktcost, e2edly,fintim, ...
 	'VariableNames', {'D', 'attacks', 'recved', 'forwd', 'pktcost', 'maxpktcost', 'e2edly', 'fintim'});
-	disp(t)
+	% disp(t)
 	results=[t.Properties.VariableNames;table2cell(t)];
 end
 
