@@ -1,4 +1,4 @@
-function [results,t]=DPRSim(basedir)
+function [results,t]=uan_dpr_main(basedir)
 	if nargin<1
 		basedir='..\';
 	end
@@ -172,7 +172,7 @@ function [results,t]=DPRSim(basedir)
 			end
 		end
 	end
-	% disp(['Number of valid topologies = ' mat2str(n)])
+	disp(['Number of valid topologies = ' mat2str(n)])
 	K=sim.routingParameters.K * ones(iterations,1);
 	t = table(		D, 	p, 	attacks, recved, forwd, 		pktcost, 	maxpktcost, 	e2edly, 	fintim, ...
 	'VariableNames',{	'D','p','atck#', 'r'   , 'total_xmits', 'xmits/pkt', 'max_xmits/pkt', 'E2E_delay', 'finish_time'});
