@@ -1,5 +1,4 @@
 simulator.log
-simulator.log
 *.sav
-bin
-*.class
+.metadata/.log
+.metadata/.plugins/*
