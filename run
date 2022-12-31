@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -ex
+
+javac -d bin/ @sources.txt
+octave scripts/main.m > /results/main.txt

@@ -1,31 +1,15 @@
-function [results,t]=RPRSim(basedir)
-	if nargin<1
-		basedir='..\';
-	end
-
+function [results,t]=RPRSim(basedir,datadir)
+	
 	dispTopology=false;
 	debugSimulation=0;
 
-	javapath=[basedir,'bin'];
-    dpath=javaclasspath();
-    if sum(strcmpi(dpath,javapath))>0
-        javarmpath(javapath);
-    end
-    javaaddpath(javapath);
-    
-	octavepath=[basedir,'scripts\octave'];
-    addpath(octavepath);
-
-	% load("pos_data.mat", "pos_data");
-	% pos_data=pos_data(1,:);
-	% pos_data=pos_data(:,1:10);
-
-	load([basedir, 'data\good_pos_data.mat'], "good_pos_data");
-	pos_data=good_pos_data(:,1:100);
+	datadir=config(basedir,datadir);	
+	load(fullfile(datadir, 'data','good_pos_data.mat'), "good_pos_data");
+	pos_data=good_pos_data(2:4,1:100);
 
 	%   network_density number_of_nodes min_number_of_neighbors
 	experiments = [
-		4	28	3
+	...	   4	28	3
 		5	47	4
 	...    6	57	5
 	...    7	66	6
@@ -93,8 +77,7 @@ function [results,t]=RPRSim(basedir)
 				sim.routingParameters.maximumTTL = 20;
 
 				%Simulation parameters
-				sim.debug = 0;
-				dispTopology = false;
+				sim.debug = debugSimulation;
 				%%%%%%%%%% Create nodes %%%%%%%%%%%
 				%sim.topology.prepare(); 
 				createTopology(sim, pos_data{ii,k});

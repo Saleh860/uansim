@@ -2,3 +2,4 @@ simulator.log
 *.sav
 .metadata/.log
 .metadata/.plugins/*
+bin

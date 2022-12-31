@@ -1,24 +1,11 @@
-function [results,t]=DPRSim(basedir)
-	if nargin<1
-		basedir='..\';
-	end
-
+function [results,t]=DPRSim(basedir,datadir)
+	
 	dispTopology=false;
 	debugSimulation=0;
 
-	javapath=[basedir,'bin'];
-    dpath=javaclasspath();
-    if sum(strcmpi(dpath,javapath))>0
-        javarmpath(javapath);
-    end
-    javaaddpath(javapath);
-    
-	octavepath=[basedir,'scripts\octave'];
-    addpath(octavepath);
-
-	load([basedir, 'data\good_pos_data.mat'], "good_pos_data");
+	datadir=config(basedir,datadir);	
+	load(fullfile(datadir, 'data','good_pos_data.mat'), "good_pos_data");
 	pos_data=good_pos_data(2:4,1:100);
-	% pos_data=good_pos_data(2:4,1);
 
 	%   network_density number_of_nodes min_number_of_neighbors
 	experiments = [
