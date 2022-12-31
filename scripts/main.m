@@ -1,7 +1,7 @@
 if exist('main.m','file')
     basedir='..';
     datadir='..';
-elseif exist('/code/script/main.m','file') %code ocean
+elseif exist('/code/scripts/main.m','file') %code ocean
     basedir='/code';
     datadir='/';
 elseif exist('scripts','dir')
