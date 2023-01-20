@@ -5,6 +5,7 @@ The Underwater Acoustic Network Simulator (UANSim) is a simulator of underwater 
 ## 1. Supported Protocol Stack
 
 1. Application Layer Protocols
+   - Constant bitrate data source
 2. Network Layer Protocols
    - Flooding
    - Depth-based routing (DBR)
